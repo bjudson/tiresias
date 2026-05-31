@@ -19,9 +19,16 @@ def extract(dream_file):
 @dream.command()
 @click.argument("symbol_slug")
 def find(symbol_slug):
-    """Find all dreams tagged with a symbol and open them in VSCode."""
+    """Find all dreams tagged with a symbol and save to derived/."""
     from actions.find import run
     run(symbol_slug)
+
+
+@dream.command()
+def symbols():
+    """List all symbols ranked by number of dreams."""
+    from actions.symbols import run
+    run()
 
 
 if __name__ == "__main__":

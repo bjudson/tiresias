@@ -9,7 +9,7 @@ uv sync                                   # Install dependencies
 uv run python cli.py --help               # Show available CLI commands
 uv run python cli.py extract <dream.md>   # Extract symbols from a dream file
 uv run python cli.py find <symbol-slug>   # Find all dreams containing a symbol
-uv run python list_symbols.py             # List symbols ranked by frequency
+uv run python cli.py symbols              # List symbols ranked by frequency
 ```
 
 Requires `ANTHROPIC_API_KEY` in `.env` (see `.env.example`).
@@ -20,13 +20,13 @@ The project is a personal dream journaling CLI. It uses Claude to extract recurr
 
 **Layers:**
 - `cli.py` — Click entry point, dispatches to actions
-- `actions/` — Business logic for each command (`extract.py`, `find.py`)
+- `actions/` — Business logic for each command (`extract.py`, `find.py`, `symbols.py`)
 - `lib/files.py` — Filesystem abstraction for reading/writing dream and symbol files
 - `lib/llm.py` — Anthropic API wrapper; `extract_symbols()` sends CONVENTIONS.md as the system prompt and returns JSON with matched/new symbols
 
 **Data flow for `extract`:** read dream file → load symbol stubs → call Claude → create new symbol stub files + update dream frontmatter with symbol list.
 
-**Data flow for `find`:** scan all dream files for a symbol slug in frontmatter → aggregate matches into a temp file → open in VSCode.
+**Data flow for `find`:** scan all dream files for a symbol slug in frontmatter → aggregate matches into `derived/symbol-<slug>.md`.
 
 ## Data Format
 
