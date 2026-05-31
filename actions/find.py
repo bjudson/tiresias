@@ -1,12 +1,6 @@
-import shutil
-import subprocess
-from pathlib import Path
 from lib import files
 
-_CODE = (
-    shutil.which("code")
-    or "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code"
-)
+DERIVED_DIR = files.DREAMS_DIR.parent / "derived"
 
 
 def run(slug: str) -> None:
@@ -21,7 +15,8 @@ def run(slug: str) -> None:
         print(f"No dreams found with symbol: {slug}")
         return
 
-    tmp_path = Path(f"/tmp/symbol-{slug}.md")
+    DERIVED_DIR.mkdir(exist_ok=True)
+    out_path = DERIVED_DIR / f"symbol-{slug}.md"
     lines = [f"# Dreams containing symbol: {slug}\n"]
     for f, post in matches:
         date = post.get("date", f.stem)
@@ -32,5 +27,5 @@ def run(slug: str) -> None:
         lines.append(post.content.strip())
         lines.append("")
 
-    tmp_path.write_text("\n".join(lines))
-    subprocess.run([_CODE, str(tmp_path)])
+    out_path.write_text("\n".join(lines))
+    print(out_path)
