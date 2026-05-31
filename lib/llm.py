@@ -54,6 +54,57 @@ def _conventions() -> str:
     return CONVENTIONS_PATH.read_text()
 
 
+AUDIT_PROMPT = """\
+You are auditing a dream for missed symbol connections.
+
+The dream currently has these symbols tagged: {already_tagged}
+
+Review the dream text against the full symbol inventory below. Identify any \
+symbols from the inventory that are clearly present in the dream but were not tagged.
+
+Only flag genuine connections — where the dream's imagery substantially overlaps \
+with the symbol's core image. Do not force weak or metaphorical connections. Do not \
+re-suggest symbols that are already tagged.
+
+Symbol inventory:
+{symbol_lines}
+
+Return JSON only — no prose, no markdown fences:
+{{"missing": ["slug1", "slug2"]}}
+
+If no symbols are missing, return {{"missing": []}}
+
+Dream text:
+{dream_text}"""
+
+
+def audit_symbols(dream_text: str, already_tagged: list[str], all_symbols: list[dict]) -> list[str]:
+    """Return slugs from all_symbols that are present in the dream but not in already_tagged."""
+    client = anthropic.Anthropic()
+
+    symbol_lines = "\n".join(
+        f"- {s['slug']}: {s['title']} — {s['summary']}"
+        for s in all_symbols
+    ) or "(none)"
+
+    tagged_str = ", ".join(already_tagged) if already_tagged else "(none)"
+
+    prompt = AUDIT_PROMPT.format(
+        already_tagged=tagged_str,
+        symbol_lines=symbol_lines,
+        dream_text=dream_text,
+    )
+
+    message = client.messages.create(
+        model="claude-opus-4-8",
+        max_tokens=512,
+        system=_conventions(),
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    return json.loads(message.content[0].text).get("missing", [])
+
+
 def extract_symbols(dream_text: str, existing_symbols: list[dict]) -> dict:
     """
     Call Claude to extract symbols from a dream.

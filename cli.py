@@ -31,5 +31,12 @@ def symbols():
     run()
 
 
+@dream.command()
+def audit():
+    """Audit all dreams for missing symbol connections."""
+    from actions.audit import run
+    run()
+
+
 if __name__ == "__main__":
     dream()
