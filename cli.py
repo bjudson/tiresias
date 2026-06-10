@@ -38,5 +38,41 @@ def audit():
     run()
 
 
+@dream.command()
+@click.option(
+    "--symbol",
+    "target_slug",
+    default=None,
+    help="Summarize a single symbol.",
+)
+@click.option(
+    "--only-empty",
+    is_flag=True,
+    help="Skip symbols that already have a summary.",
+)
+def summarize(target_slug, only_empty):
+    """Generate symbol summaries from the dreams they appear in."""
+    from actions.summarize import run
+    run(target_slug, only_empty)
+
+
+@dream.command()
+@click.argument("old_slug")
+@click.argument("new_slug")
+@click.option(
+    "--title",
+    "new_title",
+    default=None,
+    help="Override title (default: derived from new slug).",
+)
+def rename(old_slug, new_slug, new_title):
+    """Rename a symbol and update its slug across all dreams.
+
+    If the target slug already exists, merges into it.
+    """
+    from actions.rename import run
+    run(old_slug, new_slug, new_title)
+
+
 if __name__ == "__main__":
     dream()

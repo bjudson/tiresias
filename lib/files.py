@@ -62,3 +62,35 @@ def update_dream_symbols(path: Path, new_slugs: list[str]) -> None:
     combined = list(dict.fromkeys(existing + new_slugs))
     post["symbols"] = combined
     path.write_text(_dumps(post))
+
+
+def update_symbol_summary(slug: str, summary: str) -> None:
+    """Update the summary frontmatter field of an existing symbol file."""
+    path = SYMBOLS_DIR / f"{slug}.md"
+    post = frontmatter.load(str(path))
+    post["summary"] = summary
+    path.write_text(_dumps(post))
+
+
+def rename_symbol_file(old_slug: str, new_slug: str, new_title: str) -> None:
+    """Rename a symbol file and update its slug + title frontmatter."""
+    old_path = SYMBOLS_DIR / f"{old_slug}.md"
+    new_path = SYMBOLS_DIR / f"{new_slug}.md"
+    post = frontmatter.load(str(old_path))
+    post["slug"] = new_slug
+    post["title"] = new_title
+    new_path.write_text(_dumps(post))
+    old_path.unlink()
+
+
+def replace_dream_symbol(path: Path, old_slug: str, new_slug: str) -> bool:
+    """Swap old_slug for new_slug in a dream's symbols list. Returns True if changed."""
+    post = frontmatter.load(str(path))
+    symbols = list(post.get("symbols") or [])
+    if old_slug not in symbols:
+        return False
+    replaced = [new_slug if s == old_slug else s for s in symbols]
+    deduped = list(dict.fromkeys(replaced))
+    post["symbols"] = deduped
+    path.write_text(_dumps(post))
+    return True

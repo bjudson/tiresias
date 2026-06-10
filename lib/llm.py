@@ -54,6 +54,27 @@ def _conventions() -> str:
     return CONVENTIONS_PATH.read_text()
 
 
+def _parse_json_response(message) -> dict:
+    raw = message.content[0].text
+    decoder = json.JSONDecoder()
+    last = None
+    i = 0
+    while i < len(raw):
+        try:
+            obj, end = decoder.raw_decode(raw, i)
+            last = obj
+            i = end
+        except json.JSONDecodeError:
+            i += 1
+    if last is None:
+        raise RuntimeError(
+            f"Failed to parse LLM JSON response — "
+            f"no valid JSON object found.\n"
+            f"--- raw response ---\n{raw}\n--- end raw response ---"
+        )
+    return last
+
+
 AUDIT_PROMPT = """\
 You are auditing a dream for missed symbol connections.
 
@@ -102,7 +123,53 @@ def audit_symbols(dream_text: str, already_tagged: list[str], all_symbols: list[
         messages=[{"role": "user", "content": prompt}],
     )
 
-    return json.loads(message.content[0].text).get("missing", [])
+    return _parse_json_response(message).get("missing", [])
+
+
+SUMMARIZE_PROMPT = """\
+You are writing a one-line summary of a recurring symbol in a dream journal.
+
+The symbol is: {title}
+
+Below are the dream excerpts where this symbol appears. Read them and write a \
+single brief phrase (under 15 words, no period) that names this image as it \
+recurs across the dreams. Be concrete and specific to how this image actually \
+shows up — not abstract or interpretive.
+
+Example summaries:
+- "Vast or murky bodies of water appearing as obstacles or environments"
+- "Strangers who arrive uninvited and direct the action"
+- "Houses with rooms that keep multiplying or shifting layout"
+
+Dreams:
+{dream_blocks}
+
+Return JSON only — no prose, no markdown fences:
+{{"summary": "..."}}"""
+
+
+def summarize_symbol(title: str, dreams: list[dict]) -> str:
+    """Generate a one-line summary of a symbol from the dreams that contain it.
+
+    `dreams` is a list of {"date", "title", "content"} dicts.
+    """
+    client = anthropic.Anthropic()
+
+    dream_blocks = "\n\n".join(
+        f"--- {d['date']} — {d['title']} ---\n{d['content'].strip()}"
+        for d in dreams
+    )
+
+    prompt = SUMMARIZE_PROMPT.format(title=title, dream_blocks=dream_blocks)
+
+    message = client.messages.create(
+        model="claude-opus-4-8",
+        max_tokens=256,
+        system=_conventions(),
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    return _parse_json_response(message).get("summary", "").strip()
 
 
 def extract_symbols(dream_text: str, existing_symbols: list[dict]) -> dict:
@@ -130,4 +197,4 @@ def extract_symbols(dream_text: str, existing_symbols: list[dict]) -> dict:
         messages=[{"role": "user", "content": prompt}],
     )
 
-    return json.loads(message.content[0].text)
+    return _parse_json_response(message)
