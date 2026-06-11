@@ -5,11 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-uv sync                                   # Install dependencies
-uv run python cli.py --help               # Show available CLI commands
-uv run python cli.py extract <dream.md>   # Extract symbols from a dream file
-uv run python cli.py find <symbol-slug>   # Find all dreams containing a symbol
-uv run python cli.py symbols              # List symbols ranked by frequency
+uv sync                            # Install dependencies
+uv run dream --help                # Show available CLI commands
+uv run dream extract <dream.md>    # Extract symbols from a dream file
+uv run dream find <symbol-slug>    # Find all dreams containing a symbol
+uv run dream symbols               # List symbols ranked by frequency
+uv run dream audit                 # Audit all dreams for missing symbol connections
+uv run dream rename <old> <new>    # Rename a symbol slug across all dreams (merges if target exists)
+uv run dream summarize             # Generate symbol summaries from their dreams (--symbol, --only-empty)
 ```
 
 Requires `ANTHROPIC_API_KEY` in `.env` (see `.env.example`).
