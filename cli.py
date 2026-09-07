@@ -74,5 +74,26 @@ def rename(old_slug, new_slug, new_title):
     run(old_slug, new_slug, new_title)
 
 
+@dream.command()
+@click.option("--port", default=8000, type=click.IntRange(1, 65535), show_default=True)
+@click.option("--reload", is_flag=True, help="Reload when Python files change.")
+def serve(port, reload):
+    """Run the local web journal at http://127.0.0.1:8000."""
+    import uvicorn
+    uvicorn.run("web.app:app", host="127.0.0.1", port=port, reload=reload)
+
+
+@dream.command("import-markdown")
+@click.argument("root", default=".", type=click.Path(exists=True, file_okay=False, path_type=Path))
+def import_markdown(root):
+    """Import ROOT/dreams and ROOT/symbols into SQLite (safe to repeat)."""
+    from actions.import_markdown import run
+    try:
+        result = run(root)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+    click.echo(", ".join(f"{key}: {value}" for key, value in result.items()))
+
+
 if __name__ == "__main__":
     dream()

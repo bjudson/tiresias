@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"historyCacheSize":0,"includeIndicatorStyles":false}'>
+  <title>{% if selected %}{{ selected.title }} · {% elif symbol %}{{ symbol.title }} · {% endif %}Tiresias</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/htmx.min.js" defer></script>
+</head>
+<body class="bg-stone-100 text-stone-800" hx-boost="true" hx-target="#journal" hx-select="#journal" hx-swap="outerHTML" hx-history="false">
+  <main id="journal" class="mx-auto max-w-7xl px-5 py-8 sm:px-10 sm:py-12">
+    <header class="mb-10 flex items-center justify-between gap-4 border-b border-stone-300 pb-6">
+      <a href="/" class="font-serif text-3xl tracking-tight">Tiresias <span class="ml-2 font-sans text-xs uppercase tracking-widest text-stone-500">Dream journal</span></a>
+      <div class="flex flex-wrap items-center gap-4">
+        <a href="/" class="text-sm text-teal-800 underline underline-offset-4">New dream</a>
+        <form action="/audit" method="post" hx-disabled-elt="find button"><button class="text-sm text-teal-800 underline underline-offset-4 disabled:opacity-50">Audit all dreams with Claude</button></form>
+      </div>
+    </header>
+    {% block content %}{% endblock %}
+    <footer class="mt-10 text-xs text-stone-500">Tiresias · Let the image have a life of its own.</footer>
+  </main>
+</body>
+</html>

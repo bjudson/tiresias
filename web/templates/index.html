@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+    {% if saved %}<p role="status" class="mb-6 rounded-lg bg-teal-100 px-4 py-3 text-teal-900">Dream saved.</p>{% endif %}
+    <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <section class="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8" aria-labelledby="entry-title">
+      {% if selected and not editing %}
+        <p class="eyebrow">Dream · <time datetime="{{ selected.date }}">{{ selected.date }}</time></p>
+        <h1 id="entry-title" class="mt-3 font-serif text-3xl break-words">{{ selected.title }}</h1>
+        <a href="/dreams/{{ selected.id }}/edit" class="mt-4 inline-block text-sm text-teal-800 underline underline-offset-4">Edit dream</a>
+        <form action="/dreams/{{ selected.id }}/extract" method="post" class="mt-4" hx-disabled-elt="find button">
+          <button class="rounded-lg bg-teal-900 px-4 py-2 text-sm text-white disabled:opacity-50">Extract symbols with Claude</button>
+        </form>
+        <div class="mt-5 flex flex-wrap gap-2" aria-label="Dream symbols">
+          {% for tag in tags %}<a class="tag" href="{{ '/symbols/' ~ (tag.slug|urlencode) ~ '/' }}">{{ tag.title }}</a>{% else %}<span class="text-sm text-stone-500">No symbols yet</span>{% endfor %}
+        </div>
+        <div class="mt-8 whitespace-pre-wrap break-words font-serif text-lg leading-relaxed">{{ selected.body }}</div>
+      {% else %}
+        <p class="eyebrow">A place for the images</p>
+        <h1 id="entry-title" class="mt-3 font-serif text-3xl">{% if editing %}Edit dream{% else %}What did you dream?{% endif %}</h1>
+        <p class="mt-3 text-sm leading-relaxed text-stone-500">{% if editing %}Add the details you remember, or revise your entry.{% else %}Record what remains: a scene, a figure, a feeling. There is no need to explain it.{% endif %}</p>
+        {% if error %}<p role="alert" class="mt-5 rounded-lg bg-red-50 p-3 text-red-800">{{ error }}</p>{% endif %}
+        <form action="{% if editing %}/dreams/{{ selected.id }}/edit{% else %}/dreams{% endif %}" method="post" class="mt-7 space-y-5" hx-disabled-elt="find button">
+          <div><label for="title">Title</label><input id="title" name="title" required maxlength="200" value="{{ values.get('title', '') }}" placeholder="A name for this dream"></div>
+          <div><label for="date">Dream date</label><input id="date" name="date" type="date" required value="{{ values.get('date', '') }}"></div>
+          <div><label for="body">The dream</label><textarea id="body" name="body" rows="12" required maxlength="100000" placeholder="I was…">{{ values.get('body', '') }}</textarea></div>
+          <div><label for="symbols">Symbols <span class="font-normal text-stone-500">(optional)</span></label><input id="symbols" name="symbols" maxlength="2000" value="{{ values.get('symbols', '') }}" placeholder="water, old house, bird" aria-describedby="symbols-help"><p id="symbols-help" class="mt-2 text-xs text-stone-500">Separate symbols with commas. Use an existing symbol or add a new one.</p></div>
+          <button type="submit" class="rounded-lg bg-teal-900 px-6 py-3 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-50">{% if editing %}Save changes{% else %}Save dream{% endif %}</button>
+          {% if editing %}<a href="/dreams/{{ selected.id }}" class="ml-4 text-sm text-stone-600 underline underline-offset-4">Cancel</a>{% endif %}
+        </form>
+      {% endif %}
+      </section>
+      <aside class="min-w-0 space-y-8">
+        <section aria-labelledby="dreams-title">
+          <div class="mb-4 flex items-baseline justify-between gap-3"><h2 id="dreams-title" class="font-serif text-2xl">{% if symbol %}<a href="{{ '/symbols/' ~ (symbol.slug|urlencode) ~ '/' }}" class="underline decoration-stone-300 underline-offset-4 hover:text-teal-800">{{ symbol.title }}</a>{% else %}Dreams{% endif %} <span class="font-sans text-sm text-stone-500">{{ dreams|length }}</span></h2><span class="text-xs text-stone-500">Newest first</span></div>
+          {% if symbol %}
+            <a href="/" class="text-sm text-teal-800 underline">All dreams</a>
+            {% if symbol.summary %}<p class="mt-3 text-sm leading-relaxed text-stone-600">{{ symbol.summary }}</p>{% endif %}
+            {% if symbol.body %}<p class="mt-3 whitespace-pre-wrap text-sm text-stone-600">{{ symbol.body }}</p>{% endif %}
+          {% endif %}
+          <ul class="mt-4 max-h-[32rem] divide-y divide-stone-200 overflow-y-auto rounded-xl border border-stone-200 bg-white">
+          {% for dream in dreams %}
+            <li><a href="/dreams/{{ dream.id }}" class="block px-5 py-4 hover:bg-teal-50 {% if selected and selected.id == dream.id %}bg-teal-50{% endif %}" {% if selected and selected.id == dream.id %}aria-current="page"{% endif %}><time class="text-xs text-stone-500" datetime="{{ dream.date }}">{{ dream.date }}</time><p class="mt-1 break-words font-serif text-lg">{{ dream.title }}</p><p class="mt-1 truncate text-sm text-stone-500">{{ dream.body[:140] }}</p></a></li>
+          {% else %}<li class="p-5 text-sm leading-relaxed text-stone-500">{% if symbol %}No dreams contain this symbol yet.{% else %}Your journal begins here. Add a dream, or import your existing Markdown journal using the command in the README.{% endif %}</li>{% endfor %}
+          </ul>
+        </section>
+        <section aria-labelledby="symbols-title">
+          <div class="mb-4 flex items-baseline justify-between"><h2 id="symbols-title" class="font-serif text-2xl">Symbols</h2><span class="text-xs text-stone-500">By dream frequency</span></div>
+          <div class="flex max-h-80 flex-wrap gap-2 overflow-y-auto">
+            {% for item in symbols %}<a href="{{ '/?symbol=' ~ (item.slug|urlencode) }}" class="tag {% if symbol and symbol.slug == item.slug %}ring-2 ring-teal-700{% endif %}">{{ item.title }} <span class="ml-1 text-stone-500">{{ item.count }}</span></a>{% else %}<p class="text-sm text-stone-500">Symbols will appear as you tag your dreams.</p>{% endfor %}
+          </div>
+        </section>
+      </aside>
+    </div>
+{% endblock %}
